@@ -4,23 +4,45 @@ import { Container, Row, Title, List } from './styles';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import PeopleItem from '~/components/PeopleItem';
 import api from '~/services/api';
+import getRealm from '~/services/realm';
 
 export default function Main() {
   const [peoples, setPeoples] = useState([]);
-
   const [page, setPage] = useState(1);
-
-  // const netInfo = useNetInfo();
+  const netInfo = useNetInfo();
 
   useEffect(() => {
-    // if(netInfo.isConnected) 
     fetchPeoples()
   },[]);
-
+  
   async function fetchPeoples(){
-    const { data: { results } } = await api.get(`/?page=${page}&results=21`);
-    setPeoples([...peoples, ...results]);
-    setPage(page + 1);
+    try{
+      const { data: { results } } = await api.get(`/?page=${page}&results=21`);
+      
+      const realmPeoples = results.map(item => ({
+        id: Number(Math.random().toString().replace('.','')),
+        gender: item.gender,
+        name: `${item.name.first} ${item.name.last}`,
+        login: item.login.sha1,
+        email: item.email,
+        picture: item.picture.thumbnail,
+      }));
+
+      setPeoples([...peoples, ...realmPeoples]);
+      
+      await savePeoples(realmPeoples);
+
+      setPage(page + 1);
+    }catch(err){
+      console.tron.log(err.message)
+    }
+  }
+
+  async function savePeoples(peoples){
+    const realm = await getRealm();
+    realm.write(() => {
+      realm.create('People', peoples[0]);
+    })
   }
 
   return (
@@ -31,7 +53,7 @@ export default function Main() {
       </Row>
       <List
         data={peoples}
-        keyExtractor={item => String(item.login.sha1)}
+        keyExtractor={item => String(item.login)}
         keyboardShouldPersistTaps="handled"
         renderItem={({item}) => <PeopleItem people={item}/>}
         onEndReached={fetchPeoples}

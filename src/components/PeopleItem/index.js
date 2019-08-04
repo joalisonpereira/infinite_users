@@ -6,9 +6,9 @@ export default function PeopleItem({people}) {
   return (
     <Container>
       <Row>
-        <Avatar source={{uri: people.picture.thumbnail}}/>
+        <Avatar source={{uri: people.picture}}/>
         <View>
-          <Title>{`${people.name.first} ${people.name.last}`}</Title>
+          <Title>{people.name}</Title>
           <Subtitle>{people.email}</Subtitle>
         </View>
         <Gender sex={people.gender}/>
