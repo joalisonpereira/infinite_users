@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNetInfo } from "@react-native-community/netinfo";
 import { Container, Row, Title, List } from './styles';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import PeopleItem from '~/components/PeopleItem';
@@ -9,7 +8,6 @@ import getRealm from '~/services/realm';
 export default function Main() {
   const [peoples, setPeoples] = useState([]);
   const [page, setPage] = useState(1);
-  const netInfo = useNetInfo();
 
   useEffect(() => {
     fetchPeoples()
@@ -17,7 +15,7 @@ export default function Main() {
   
   async function fetchPeoples(){
     try{
-      const { data: { results } } = await api.get(`/?page=${page}&results=21`);
+      const { data: { results } } = await api.get(`x/?page=${page}&results=20`);
       
       const realmPeoples = results.map(item => ({
         id: Number(Math.random().toString().replace('.','')),
@@ -29,19 +27,19 @@ export default function Main() {
       }));
 
       setPeoples([...peoples, ...realmPeoples]);
-      
-      await savePeoples(realmPeoples);
-
+      savePeoples(realmPeoples);
       setPage(page + 1);
     }catch(err){
-      console.tron.log(err.message)
+      const realm = await getRealm();
+      const realmPeoples = realm.objects('People');
+      setPeoples(realmPeoples);
     }
   }
 
   async function savePeoples(peoples){
     const realm = await getRealm();
     realm.write(() => {
-      realm.create('People', peoples[0]);
+      peoples.forEach(people => realm.create('People', people))
     })
   }
 
